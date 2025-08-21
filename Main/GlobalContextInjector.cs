@@ -8,9 +8,10 @@ namespace DumbInjector.Injectors
 {
     /// <summary>
     /// Global injector: handles global services/singletons, global scoped scenes.
+    /// Place in a persistent scene if cross-scene injection is needed.
     /// </summary>
     [DefaultExecutionOrder(int.MinValue + 999)]
-    public class GlobalContextInjector : MonoBehaviour
+    public class GlobalContextInjector : MonoBehaviour, IInjector
     {
         readonly HashSet<Type> _injectableTypes = new();
         bool _typesCached;
@@ -55,14 +56,13 @@ namespace DumbInjector.Injectors
                     // Register provider outputs
                     if (mb is IDependencyProvider provider)
                     {
-                        Injector.Instance.RegisterProvider(provider);
+                        Builder.Instance.RegisterProvider(provider);
                     }
 
                     if (IsInjectable(mb))
                     {
-                        Injector.Instance.Inject(mb);
+                        Inject(mb);
                     }
-                    
                 }
             }
         }
@@ -70,6 +70,16 @@ namespace DumbInjector.Injectors
         bool IsInjectable(MonoBehaviour obj)
         {
             return  _injectableTypes.Contains(obj.GetType());
+        }
+
+        public void Inject(object mb)
+        {
+            Builder.Instance.Inject(mb);
+        }
+
+        public object Resolve(Type t)
+        {
+            return Builder.Instance.Resolve(t);
         }
     }
 }

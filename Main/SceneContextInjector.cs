@@ -10,7 +10,7 @@ namespace DumbInjector
     /// Scene injector: handles scene-local objects for faster lookups.
     /// </summary>
     [DefaultExecutionOrder(int.MinValue + 1000)]
-    public class SceneContextInjector : MonoBehaviour
+    public class SceneContextInjector : MonoBehaviour, IInjector
     {
         readonly HashSet<Type> _injectableTypes = new();
         readonly Dictionary<Type, object> _sceneRegistry = new();
@@ -67,7 +67,7 @@ namespace DumbInjector
 
                     if (IsInjectable(mb))
                     {
-                        InjectInstance(mb);
+                        Inject(mb);
                     }
                     
                 }
@@ -88,8 +88,8 @@ namespace DumbInjector
                 }
             }
         }
-        
-        void InjectInstance(object instance)
+
+        public void Inject(object instance)
         {
             var type = instance.GetType();
             const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
@@ -124,15 +124,20 @@ namespace DumbInjector
                 method.Invoke(instance, parameters);
             }
         }
-        
-        object Resolve(Type t)
+
+        public object Resolve(Type t)
         {
             // Check scene-local container first
             _sceneRegistry.TryGetValue(t, out var instance);
 
-            // Check Global optionally.
-            if (instance == null) instance = Injector.Instance.Resolve(t);
-
+            // Fallback to global injector if one exists
+            if (instance != null) return instance;
+            
+            var globalInjector = Builder.Exists ? Builder.Instance : null;
+            if (globalInjector != null)
+            {
+                instance = globalInjector.Resolve(t);
+            }
             return instance;
         }
         

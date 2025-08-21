@@ -7,6 +7,7 @@ namespace DumbInjector.Internal
     /// </summary>
     public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
+        public static bool Exists => _instance != null;
         private static T _instance;
         public static T Instance
         {
