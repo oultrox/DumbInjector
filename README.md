@@ -162,5 +162,33 @@ DumbInjector leverages **C# reflection** to automatically discover and inject de
 
 This approach allows you to write clean, decoupled code without manually wiring dependencies, while still being fully dynamic and flexible.
 
+## Code Execution Order
+
+Correct execution timing is critical for dependency injection to work reliably.
+
+### Scene-Scoped Injection
+
+The **SceneContextInjector** runs **before any `Awake()` methods** of your scene’s `MonoBehaviour`s.  
+
+This ensures that all `[Inject]` dependencies are already resolved when components initialize.  
+
+As a result, for most scene-scoped injections, you don’t need extra setup — it works out of the box.
+
+### Cross-Scene Injection
+
+Like previously mentioned, for dependencies that persist across multiple scenes (e.g., `AudioProvider`, `PlayerController`), injection requires **manual handling**.  
+
+In these cases, a **GlobalContextInjector** should be initialized as early as possible (e.g., via a **bootstrap scene** or `[RuntimeInitializeOnLoadMethod]`).  
+
+This guarantees that global providers are registered before new scenes are loaded, allowing injection to succeed even across additive scenes.
+
+### Execution Flow
+
+1. **GlobalContextInjector** *(optional, cross-scene)* → Registers global providers early.  
+2. **SceneContextInjector** *(per scene)* → Resolves scene-local providers and applies injections.  
+3. **MonoBehaviour.Awake()** → Runs with all required dependencies already injected.  
+4. **MonoBehaviour.Start()** → Safe to use injected dependencies for gameplay logic.  
+
+
 
 
