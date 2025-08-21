@@ -28,7 +28,7 @@ graph LR
 - **Attribute-based injection:** `[Inject]` for fields, properties, and methods
 - **Provider system:** `[Provide]` methods in `IDependencyProvider` for registering injectable services
 - **Minimal boilerplate:** lightweight and fast
-- **Extensible core:** The `Main` assembly is the entry point for extension
+- **Extensible core:** The `Main` assembly is the entry point for extension for your providers.
 - **Usable injectors:** `Injectors` prefabs can be used as-is without being extended
 
 ## Usage
@@ -100,9 +100,9 @@ public class PlayerController : MonoBehaviour
 
 No singleton handling is required in your consumers — everything is injected automatically, let the dumb injectors handle that for you.
 
-### Cross-Scene Setup
+### 6. Additive-Scene Setup
 
-When using a `GlobalContextInjector` alongside scene-local `SceneContextInjector`s, it is **crucial that the global context is initialized first**. This ensures that any dependencies registered globally are available to scene-local injectors.
+When using a `GlobalContextInjector` in a globla scene alongside other scene-local's `SceneContextInjector`, it is **crucial that the global context is initialized first**. This ensures that any dependencies registered globally are available to scene-local injectors.
 
 You can achieve this in one of the following ways:
 
@@ -112,13 +112,25 @@ You can achieve this in one of the following ways:
 
 > ⚠️ **Note:** The framework does not automatically manage execution order between global and scene-local injectors. This design gives you full control and flexibility over your initialization flow. Make sure the global injector is initialized before any scene-local injectors to ensure all dependencies are correctly resolved.
 
-## Scene-local vs Global Injection
+## Scene-local vs Global Injection Structures
 
 The **DumbInjector** framework works on a **scene-scoped model**:
 
 - **SceneContextInjector**: lives in each scene and handles injections for objects **within that scene**.
 - **GlobalContextInjector**: lives in a persistent "Global" scene and provides **cross-scene services** that survive scene transitions.
 
+### Scene-Scoped Flow
+```mermaid
+graph TD
+    SceneA["Scene A (SceneContextInjector)"]
+    AudioProvider["AudioProvider (IDependencyProvider)"]
+    Player["PlayerController ([Inject] IAudioHandler)"]
+
+    SceneA --> AudioProvider
+    AudioProvider -->|Provides IAudioHandler| Player
+```
+
+### Global-Scoped Flow
 ```mermaid
 graph TD
     GlobalScene["Global Scene (GlobalContextInjector)"]
@@ -136,17 +148,7 @@ graph TD
     SceneB -->|Scene-local injection| PlayerB
 ```
 
-> ⚠️ Note: The global injector is optional. If you don’t need cross-scene services, each scene can rely entirely on its SceneContextInjector.
 
-```mermaid
-graph TD
-    SceneA["Scene A (SceneContextInjector)"]
-    AudioProvider["AudioProvider (IDependencyProvider)"]
-    Player["PlayerController ([Inject] IAudioHandler)"]
-
-    SceneA --> AudioProvider
-    AudioProvider -->|Provides IAudioHandler| Player
-```
 ## Technical Details
 
 ### Reflection-Based Injection
