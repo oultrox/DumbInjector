@@ -31,76 +31,23 @@ graph LR
 - **Extensible core:** The `Main` assembly is the entry point for extension for your providers.
 - **Usable injectors:** `Injectors` prefabs can be used as-is without being extended
 
-## Usage
-
-### 1. Setting Up Scene Context Injectors
+## Setup
 
 DumbInjector is **scene-scoped**, meaning each scene requires a context injector to resolve dependencies correctly.  
 
-### 2. **Setup Context Injector Prefab Setup**
+### 1. **Setup Context Injector Prefab Setup**
   Each individual scene (except the global one) should have a `SceneContextInjector` prefab. It will:
   - Scan all root GameObjects for `[Inject]` attributes
   - Resolve dependencies from scene-local providers first
   - Resolve Global Providers if needed.
   
-### 3. **Global Context Injector Prefab setup (for additive scene setups)**
+### 2. **Global Context Injector Prefab setup (for additive scene setups)**
   Place this prefab in a persistent "Global" scene. It will automatically:
   - Scan the scene for `[Inject]` attributes
   - Register all `IDependencyProvider` outputs
   - Inject dependencies into scene objects
 
- ### 4. Provide dependencies
-   Any component you want to inject must have a corresponding Provider that implements `IDependencyProvider` and exposes it via a `[Provide]` method. The injector will not magically create instances — it relies on providers to supply dependencies.
-
-```csharp
-// Example Component Provider
-using DumbInjector;
-using UnityEngine;
-
-public class PlayerProvider : MonoBehaviour, IDependencyProvider
-{
-    [SerializeField] PlayerHealth playerHealth;
-
-    [Provide]
-    IHasHealth ProvidePlayerHealth() => playerHealth;
-}
-```
-
-```csharp
-// Example Component Provider
-using DumbInjector;
-using UnityEngine;
-
-public class AudioProvider: MonoBehaviour, IDependencyProvider
-{
-    [SerializeField] AudioLogger audioLogger;
-
-    [Provide]
-    IAudioHandler ProvideAudio() => audioLogger;
-}
-```
-
-### 5. Injecting Dependencies
-
-Simply decorate fields, properties, or methods with `[Inject]`:
-
-```csharp
-public class PlayerController : MonoBehaviour
-{
-    [Inject] IHasHealth health;
-    [Inject] IAudioHandler audio;
-
-    private void Start()
-    {
-        health.TakeDamage(10);
-        audio.PlaySound("spawn");
-    }
-}
-```
-
-No singleton handling is required in your consumers — everything is injected automatically, let the dumb injectors handle that for you.
-
-### 6. Additive-Scene Setup
+### 3. Additive-Scene Setup
 
 When using a `GlobalContextInjector` in a globla scene alongside other scene-local's `SceneContextInjector`, it is **crucial that the global context is initialized first**. This ensures that any dependencies registered globally are available to scene-local injectors.
 
@@ -148,19 +95,131 @@ graph TD
     SceneB -->|Scene-local injection| PlayerB
 ```
 
+## Usage
+After you got your scenes setup, it's _Dumb Injecting_ time!
+ ### 1. Provide dependencies
+   Any component you want to inject must have a corresponding Provider that implements `IDependencyProvider` and exposes it via a `[Provide]` method. The injector will not magically create instances — it relies on providers to supply dependencies.
 
-## Technical Details
+```csharp
+// Example Component Provider
+using DumbInjector;
+using UnityEngine;
 
-### Reflection-Based Injection
+public class PlayerProvider : MonoBehaviour, IDependencyProvider
+{
+    [SerializeField] PlayerHealth playerHealth;
 
-DumbInjector leverages **C# reflection** to automatically discover and inject dependencies:
+    [Provide]
+    IHasHealth ProvidePlayerHealth() => playerHealth;
+}
+```
 
-- **[Inject] attributes:** Applied to fields, properties, or methods. The injector scans each object’s members at runtime and sets them automatically.
-- **[Provide] attributes:** Used inside `IDependencyProvider` implementations. These methods expose instances that can be injected elsewhere.
-- **Scene-scoped reflection:** Instead of scanning the entire project every time, the injector caches injectable types per scene. This ensures fast lookups and minimal runtime overhead.
-- **Global fallback:** SceneContextInjector resolves dependencies from local providers first, then falls back to the global injector if no local provider is available.
+```csharp
+// Example Component Provider
+using DumbInjector;
+using UnityEngine;
 
-This approach allows you to write clean, decoupled code without manually wiring dependencies, while still being fully dynamic and flexible.
+public class AudioProvider: MonoBehaviour, IDependencyProvider
+{
+    [SerializeField] AudioLogger audioLogger;
+
+    [Provide]
+    IAudioHandler ProvideAudio() => audioLogger;
+}
+```
+
+### 2. Injecting Dependencies
+
+Simply decorate fields, properties, or methods with `[Inject]`:
+
+```csharp
+public class PlayerController : MonoBehaviour
+{
+    [Inject] IHasHealth health;
+    [Inject] IAudioHandler audio;
+
+    private void Start()
+    {
+        health.TakeDamage(10);
+        audio.PlaySound("spawn");
+    }
+}
+```
+
+No singleton handling is required in your consumers — everything is injected automatically, let the dumb injectors handle that for you.
+
+## Injection Methods
+
+There are three primary ways to trigger dependency injection in the system:
+
+---
+
+### 1. Start Injection via Scene Context
+
+Each scene can have a **SceneContextInjector** (or a **GlobalContextInjector** in persistent scenes) that automatically handles injection for all existing objects when the scene loads. This ensures that dependencies are populated without manually attaching `AutoInjector` to every object.
+
+**How it works:**
+- The context injector scans all root `GameObjects` in the scene.
+- Recursively visits all children.
+- Injects any `[Inject]` fields, properties, or methods.
+- Registers any `IDependencyProvider`s it finds for later resolution.
+
+**SceneContextInjector**
+```csharp
+public class SceneContextInjector : MonoBehaviour, IInjector
+{
+    readonly HashSet<Type> _injectableTypes = new();
+    readonly Dictionary<Type, object> _sceneRegistry = new();
+    bool _typesCached;
+
+    private void Awake()
+    {
+        CacheInjectableTypes();
+        InjectSceneObjects();
+    }
+...
+```
+
+### 2. Automatic Dynamic Injection (Recommended)
+
+Attach the **`AutoInjector`** component to any `MonoBehaviour` that requires dependencies. On `Awake()`, `AutoInjector` automatically resolves and injects all `[Inject]` fields and methods. It will first look for a **scene context injector**, and if none is found, it falls back to a **Global context injector**.
+
+#### Example: 
+```csharp
+// With the AutoInjector component attached.
+public class PlayerController : MonoBehaviour
+{
+    [Inject] private IAudioHandler audioHandler;
+
+    private void OnEnable()
+    {
+        audioHandler.Play("SpawnSound");
+    }
+}
+```
+
+#### Unity Setup
+
+1. Add your `MonoBehaviour` (e.g., `PlayerController`) to a `GameObject`.
+2. Add the `AutoInjector` component to the same `GameObject`.
+3. The `[Inject]` fields and methods will be automatically populated before `Start()` executes.
+
+### 3. Manual Scene Injection
+
+For objects already present in the scene or instantiated at runtime that cannot have `AutoInjector` attached, you can manually inject dependencies using a scene or global injector.
+
+**Example:**
+```csharp
+[SerializeField] SceneContextInjector _injector;
+_injector.Inject(existingGameObject);
+```
+This will scan the `GameObject` and all its children for `[Inject]` attributes. Dependencies are resolved and injected automatically.
+
+**Use Cases:**
+- Runtime-spawned prefabs
+- Pre-existing scene objects
+
+**Tip:** For most use cases, `AutoInjector` is sufficient and preferred. Manual injection provides flexibility for complex scene setups or dynamic objects.
 
 ## Code Execution Order
 
@@ -174,6 +233,7 @@ This ensures that all `[Inject]` dependencies are already resolved when componen
 
 As a result, for most scene-scoped injections, you don’t need extra setup — it works out of the box.
 
+---
 ### Cross-Scene Injection
 
 Like previously mentioned, for dependencies that persist across multiple scenes (e.g., `AudioProvider`, `PlayerController`), injection requires **manual handling**.  
@@ -189,6 +249,34 @@ This guarantees that global providers are registered before new scenes are loade
 3. **MonoBehaviour.Awake()** → Runs with all required dependencies already injected.  
 4. **MonoBehaviour.Start()** → Safe to use injected dependencies for gameplay logic.  
 
+## Technical Details
+
+### Reflection-Based Injection
+
+DumbInjector leverages **C# reflection** to automatically discover and inject dependencies:
+
+- **[Inject] attributes:** Applied to fields, properties, or methods. The injector scans each object’s members at runtime and sets them automatically.
+- **[Provide] attributes:** Used inside `IDependencyProvider` implementations. These methods expose instances that can be injected elsewhere.
+- **Scene-scoped reflection:** Instead of scanning the entire project every time, the injector caches injectable types per scene. This ensures fast lookups and minimal runtime overhead.
+- **Global fallback:** SceneContextInjector resolves dependencies from local providers first, then falls back to the global injector if no local provider is available.
+
+This approach allows you to write clean, decoupled code without manually wiring dependencies, while still being fully dynamic and flexible.
+
+## Things to improve
+- I'm pretty sure I'm missing C# constructor plain classes injections. 
+- Better debugging tools. 
+- Probably better architectural exposure as a tool.
+
+## References
+
+- **Reflex** – A lightweight dependency injection framework for Unity. Useful for understanding attribute-based injection and runtime resolution.  
+  [GitHub](https://github.com/gustavopsantos/Reflex) 
+
+- **Zenject** – A popular DI framework for Unity supporting scene contexts, global containers, and automatic injection. Great inspiration for context-based injection patterns.  
+  [Zenject Documentation](https://github.com/modesttree/Zenject)
+
+- **[Youtube Video](https://youtu.be/PJcBJ60C970)** – Demonstrates Unity dependency injection patterns and best practices:  
+  
 
 
 
