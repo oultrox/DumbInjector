@@ -16,7 +16,7 @@ graph LR
 
     %% Connections
     IDP --> Provide
-    Inject --> Injector["SceneContextInjector / GlobalContextInjector"]
+    Inject --> Injector["Injectors"]
     Provide --> Injector
 ```
 
