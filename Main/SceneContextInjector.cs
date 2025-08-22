@@ -14,7 +14,7 @@ namespace DumbInjector
     {
         readonly HashSet<Type> _injectableTypes = new();
         readonly Dictionary<Type, object> _sceneRegistry = new();
-        bool _typesCached;
+        bool _areTypesCached;
 
         private void Awake()
         {
@@ -24,7 +24,7 @@ namespace DumbInjector
 
         void CacheInjectableTypes()
         {
-            if (_typesCached) return;
+            if (_areTypesCached) return;
 
             const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             var types = AppDomain.CurrentDomain.GetAssemblies()
@@ -40,7 +40,7 @@ namespace DumbInjector
                 if (injectable) _injectableTypes.Add(t);
             }
 
-            _typesCached = true;
+            _areTypesCached = true;
         }
         
         void InjectSceneObjects()
@@ -48,7 +48,7 @@ namespace DumbInjector
             var roots = gameObject.scene.GetRootGameObjects();
             foreach (var root in roots)
             {
-                var all = root.GetComponentsInChildren<MonoBehaviour>(true);
+                var all = root.GetComponentsInChildren<MonoBehaviour>();
                 foreach (var mb in all)
                 {
                     if (mb == null) continue;
@@ -62,9 +62,11 @@ namespace DumbInjector
                     _sceneRegistry.TryAdd(type, mb);
 
                     // Register all interfaces it implements
-                    foreach (var iface in type.GetInterfaces())
-                        _sceneRegistry.TryAdd(iface, mb);
-
+                    foreach (var interfaceType in type.GetInterfaces())
+                    {
+                        _sceneRegistry.TryAdd(interfaceType, mb);
+                    }
+                    
                     if (IsInjectable(mb))
                     {
                         Inject(mb);
@@ -94,37 +96,11 @@ namespace DumbInjector
             var type = instance.GetType();
             const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-            // Inject fields
-            foreach (var field in type.GetFields(flags).Where(f => Attribute.IsDefined(f, typeof(InjectAttribute))))
-            {
-                var resolved = Resolve(field.FieldType);
-                if (resolved != null)
-                {
-                    field.SetValue(instance, resolved);
-                }
-            }
-
-            // Inject properties
-            foreach (var prop in type.GetProperties(flags).Where(p => Attribute.IsDefined(p, typeof(InjectAttribute))))
-            {
-                if (!prop.CanWrite) continue;
-                var resolved = Resolve(prop.PropertyType);
-                if (resolved != null) // works for regular C# objects
-                {
-                    prop.SetValue(instance, resolved);
-                }
-            }
-
-            // Inject methods
-            foreach (var method in type.GetMethods(flags).Where(m => Attribute.IsDefined(m, typeof(InjectAttribute))))
-            {
-                var parameters = method.GetParameters()
-                    .Select(p => Resolve(p.ParameterType))
-                    .ToArray();
-                method.Invoke(instance, parameters);
-            }
+            InjectFields(instance, type, flags);
+            InjectProperties(instance, type, flags);
+            InjectMethods(instance, type, flags);
         }
-
+        
         public object Resolve(Type t)
         {
             // Check scene-local container first
@@ -139,6 +115,45 @@ namespace DumbInjector
                 instance = globalInjector.Resolve(t);
             }
             return instance;
+        }
+        
+        void InjectMethods(object instance, Type type, BindingFlags flags)
+        {
+            // Inject methods
+            foreach (var method in type.GetMethods(flags).Where(m => Attribute.IsDefined(m, typeof(InjectAttribute))))
+            {
+                var parameters = method.GetParameters()
+                    .Select(p => Resolve(p.ParameterType))
+                    .ToArray();
+                method.Invoke(instance, parameters);
+            }
+        }
+
+        void InjectProperties(object instance, Type type, BindingFlags flags)
+        {
+            // Inject properties
+            foreach (var prop in type.GetProperties(flags).Where(p => Attribute.IsDefined(p, typeof(InjectAttribute))))
+            {
+                if (!prop.CanWrite) continue;
+                var resolved = Resolve(prop.PropertyType);
+                if (resolved != null) // works for regular C# objects
+                {
+                    prop.SetValue(instance, resolved);
+                }
+            }
+        }
+
+        void InjectFields(object instance, Type type, BindingFlags flags)
+        {
+            // Inject fields
+            foreach (var field in type.GetFields(flags).Where(f => Attribute.IsDefined(f, typeof(InjectAttribute))))
+            {
+                var resolved = Resolve(field.FieldType);
+                if (resolved != null)
+                {
+                    field.SetValue(instance, resolved);
+                }
+            }
         }
         
         bool IsInjectable(MonoBehaviour obj)

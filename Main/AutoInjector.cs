@@ -18,7 +18,7 @@ namespace DumbInjector
             Recursive // inject all MonoBehaviours on this GameObject and children
         }
 
-        public InjectionMode mode = InjectionMode.Single;
+        public InjectionMode mode = InjectionMode.Recursive;
 
         private void Awake()
         {
