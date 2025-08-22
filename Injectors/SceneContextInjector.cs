@@ -48,7 +48,7 @@ namespace DumbInjector
             var roots = gameObject.scene.GetRootGameObjects();
             foreach (var root in roots)
             {
-                var all = root.GetComponentsInChildren<MonoBehaviour>();
+                var all = root.GetComponentsInChildren<MonoBehaviour>(true);
                 foreach (var mb in all)
                 {
                     if (mb == null) continue;

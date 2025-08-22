@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿using System;
 
 namespace DumbInjector
 {
@@ -8,6 +8,6 @@ namespace DumbInjector
     public interface IInjector
     {
         void Inject(object mb);
-        object Resolve(System.Type t);
+        object Resolve(Type t);
     }
 }
