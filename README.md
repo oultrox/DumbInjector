@@ -65,6 +65,7 @@ The **DumbInjector** framework works on a **scene-scoped model**:
 
 - **SceneContextInjector**: lives in each scene and handles injections for objects **within that scene**.
 - **GlobalContextInjector**: lives in a persistent "Global" scene and provides **cross-scene services** that survive scene transitions.
+- This means each scene requires either of the two, or your owns solution extending the `IInjector` interface _(I explain this later on)_.
 
 ### Scene-Scoped Flow
 ```mermaid
