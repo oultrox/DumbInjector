@@ -1,7 +1,10 @@
 {
-    "name": "Internal",
+    "name": "DumbDI.Internal",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:b45a55fa4251b1e47a21220ee5cb3f34",
+        "GUID:e4dd2fc2224c4b843908fe099bbb488b"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
