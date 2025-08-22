@@ -215,11 +215,75 @@ _injector.Inject(existingGameObject);
 ```
 This will scan the `GameObject` and all its children for `[Inject]` attributes. Dependencies are resolved and injected automatically.
 
-**Use Cases:**
-- Runtime-spawned prefabs
-- Pre-existing scene objects
-
 **Tip:** For most use cases, `AutoInjector` is sufficient and preferred. Manual injection provides flexibility for complex scene setups or dynamic objects.
+
+### Advanced Usage
+
+- You can inject through the `IInjector` interface if you want to work with a custom injector implementation without relying on the default scene or global injectors.
+- You can also use the `Builder` singleton directly to create or manage your own injector and still resolve dependencies using the same `[Inject]` attributes.
+
+
+```csharp
+using System;
+    /// <summary>
+    /// Interface for all injectors.
+    /// </summary>
+    public interface IInjector
+    {
+        void Inject(object mb);
+        object Resolve(Type t);
+    }
+```
+
+### Example Orchestrator
+```csharp
+// Example usage:
+public class ExampleUsage
+{
+    public void Setup()
+    {
+        var injector = new MyCustomInjector();
+        
+        var player = new PlayerController();
+        injector.Inject(player); // Dependencies injected automatically
+    }
+}
+```
+
+Or you can do things like...
+```csharp
+using UnityEngine;
+using DumbInjector;
+
+public class EnemySpawner : MonoBehaviour
+{
+    [SerializeField] GameObject sceneContext; // Assign the scene context GameObject
+    IInjector _injector;
+
+    void Awake()
+    {
+        if (sceneContext != null)
+            _injector = sceneContext.GetComponent<IInjector>();
+    }
+
+    public void OnSpawn(GameObject enemyPrefab)
+    {
+        // Instantiate the enemy
+        var enemyInstance = Instantiate(enemyPrefab);
+
+        // Example 1: Inject only the main component you know requires dependencies.
+        var enemyComponent = enemyInstance.GetComponent<Enemy>();
+        _injector?.Inject(enemyComponent);
+
+        // Example 2: Inject all MonoBehaviours in the prefab and its children.
+        var allComponents = enemyInstance.GetComponentsInChildren<MonoBehaviour>(true);
+        foreach (var comp in allComponents)
+        {
+            _injector?.Inject(comp);
+        }
+    }
+}
+```
 
 ## Code Execution Order
 
