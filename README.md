@@ -248,7 +248,7 @@ using DumbInjector;
 /// </summary>
 public class CustomInjector : IInjector
 {
-    private readonly Dictionary<Type, object> _registry = new();
+    readonly Dictionary<Type, object> _registry = new();
     const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
     /// <summary>
