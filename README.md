@@ -249,6 +249,7 @@ using DumbInjector;
 public class CustomInjector : IInjector
 {
     private readonly Dictionary<Type, object> _registry = new();
+    const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
     /// <summary>
     /// Register an instance for a given type.
@@ -270,8 +271,7 @@ public class CustomInjector : IInjector
     {
         if (obj == null) return;
 
-        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-
+        
         // Inject fields
         foreach (var field in obj.GetType().GetFields(flags)
                      .Where(f => Attribute.IsDefined(f, typeof(InjectAttribute))))
