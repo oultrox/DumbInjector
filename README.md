@@ -152,8 +152,6 @@ No singleton handling is required in your consumers — everything is injected a
 
 There are three primary ways to trigger dependency injection in the system:
 
----
-
 ### 1. Start Injection via Scene Context
 
 Each scene can have a **SceneContextInjector** (or a **GlobalContextInjector** in persistent scenes) that automatically handles injection for all existing objects when the scene loads. This ensures that dependencies are populated without manually attaching `AutoInjector` to every object.
@@ -177,7 +175,8 @@ public class SceneContextInjector : MonoBehaviour, IInjector
         CacheInjectableTypes();
         InjectSceneObjects();
     }
-...
+   ... 
+}
 ```
 
 ### 2. Automatic Dynamic Injection (Recommended)
@@ -223,6 +222,7 @@ This will scan the `GameObject` and all its children for `[Inject]` attributes. 
 - You can also use the `Builder` singleton directly to create or manage your own injector and still resolve dependencies using the same `[Inject]` attributes.
 
 
+
 ```csharp
 using System;
     /// <summary>
@@ -235,7 +235,80 @@ using System;
     }
 ```
 
-### Example Orchestrator
+### Example CustomInjector
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using DumbInjector;
+
+/// <summary>
+/// A simple custom injector for demonstration purposes.
+/// </summary>
+public class CustomInjector : IInjector
+{
+    private readonly Dictionary<Type, object> _registry = new();
+
+    /// <summary>
+    /// Register an instance for a given type.
+    /// </summary>
+    public void Register<T>(T instance)
+    {
+        var type = typeof(T);
+        if (_registry.ContainsKey(type))
+        {
+            throw new InvalidOperationException($"Type {type.Name} is already registered.");
+        }
+        _registry[type] = instance;
+    }
+
+    /// <summary>
+    /// Inject dependencies into fields or properties marked with [Inject].
+    /// </summary>
+    public void Inject(object obj)
+    {
+        if (obj == null) return;
+
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+        // Inject fields
+        foreach (var field in obj.GetType().GetFields(flags)
+                     .Where(f => Attribute.IsDefined(f, typeof(InjectAttribute))))
+        {
+            var resolved = Resolve(field.FieldType);
+            if (resolved != null) field.SetValue(obj, resolved);
+        }
+
+        // Inject properties
+        foreach (var prop in obj.GetType().GetProperties(flags)
+                     .Where(p => Attribute.IsDefined(p, typeof(InjectAttribute)) && p.CanWrite))
+        {
+            var resolved = Resolve(prop.PropertyType);
+            if (resolved != null) prop.SetValue(obj, resolved);
+        }
+    }
+
+    /// <summary>
+    /// Resolve an instance for a given type.
+    /// </summary>
+    public object Resolve(Type t)
+    {
+        _registry.TryGetValue(t, out var instance);
+        return instance;
+    }
+
+    /// <summary>
+    /// Generic resolve helper.
+    /// </summary>
+    public T Resolve<T>()
+    {
+        return (T)Resolve(typeof(T));
+    }
+}
+```
+
+### Example Factory
 ```csharp
 // Example usage:
 public class ExampleUsage
@@ -252,34 +325,28 @@ public class ExampleUsage
 
 Or you can do things like...
 ```csharp
-using UnityEngine;
-using DumbInjector;
-
-public class EnemySpawner : MonoBehaviour
+// Exampple Orchestrator
+public class EnemyFactory
 {
-    [SerializeField] GameObject sceneContext; // Assign the scene context GameObject
     IInjector _injector;
-
-    void Awake()
+    public EnemyFactory(IInjector injector)
     {
-        if (sceneContext != null)
-            _injector = sceneContext.GetComponent<IInjector>();
+        _injector = injector;
     }
 
-    public void OnSpawn(GameObject enemyPrefab)
+    public GameObject CreateEnemy(GameObject prefab)
     {
-        // Instantiate the enemy
-        var enemyInstance = Instantiate(enemyPrefab);
+        var instance = GameObject.Instantiate(prefab);
 
         // Example 1: Inject only the main component you know requires dependencies.
-        var enemyComponent = enemyInstance.GetComponent<Enemy>();
-        _injector?.Inject(enemyComponent);
+        var enemyComponent = instance.GetComponent<Enemy>();
+        _injector.Inject(enemyComponent);
 
         // Example 2: Inject all MonoBehaviours in the prefab and its children.
-        var allComponents = enemyInstance.GetComponentsInChildren<MonoBehaviour>(true);
+        var allComponents = instance.GetComponentsInChildren<MonoBehaviour>(true);
         foreach (var comp in allComponents)
         {
-            _injector?.Inject(comp);
+            _injector.Inject(comp);
         }
     }
 }
@@ -322,14 +389,15 @@ DumbInjector leverages **C# reflection** to automatically discover and inject de
 - **[Inject] attributes:** Applied to fields, properties, or methods. The injector scans each object’s members at runtime and sets them automatically.
 - **[Provide] attributes:** Used inside `IDependencyProvider` implementations. These methods expose instances that can be injected elsewhere.
 - **Scene-scoped reflection:** Instead of scanning the entire project every time, the injector caches injectable types per scene. This ensures fast lookups and minimal runtime overhead.
-- **Global fallback:** SceneContextInjector resolves dependencies from local providers first, then falls back to the global injector if no local provider is available.
+- **Type caching optimization**: The injector caches all injectable types (`[Inject]` fields, properties, methods, and IDependencyProviders) once per scene or globally. This avoids repeated reflection scans at runtime, improving performance when injecting multiple objects.
+- **Global fallback:** SceneContextInjector resolves dependencies from local providers first, then falls back to the global injector if no local provider is available (and if there's any global context to begin with).
 
 This approach allows you to write clean, decoupled code without manually wiring dependencies, while still being fully dynamic and flexible.
 
 ## Things to improve
 - I'm pretty sure I'm missing C# constructor plain classes injections. 
 - Better debugging tools. 
-- Probably better architectural exposure as a tool.
+- Better architectural tooling.
 
 ## References
 
