@@ -24,7 +24,7 @@ graph LR
 ## Features
 
 - **Scene-local injection:** via `SceneContextInjector`
-- **Global singleton injection:** via `GlobalContextInjector`
+- **Global singleton injection:** Managed by `GlobalContextInjector`, allowing registration and resolution of dependencies that persist across scenes, suitable for additive scene workflows.
 - **Attribute-based injection:** `[Inject]` for fields, properties, and methods
 - **Provider system:** `[Provide]` methods in `IDependencyProvider` for registering injectable services
 - **Minimal boilerplate:** lightweight and fast
