@@ -1,5 +1,7 @@
 # DumbInjector
-_The Dumb Injector._
+![DumbInjector](https://img.shields.io/badge/DumbInjector-Lightweight-blueviolet) ![Unity](https://img.shields.io/badge/Unity-2021%2B-black?logo=unity) ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)   ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+
+_The Dumb Injector._ 
 
 DumbInjector is a lightweight, home-grown Dependency Injection (DI) framework designed for Unity. It provides simple and fast injection for both scene-local and global objects, with minimal setup. Perfect for developers who want DI without the overhead of large frameworks.
 
@@ -30,6 +32,25 @@ graph LR
 - **Minimal boilerplate:** lightweight and fast
 - **Extensible core:** The `Main` assembly is the entry point for extension for your providers.
 - **Usable injectors:** `Injectors` prefabs can be used as-is without being extended
+
+## Installation
+
+You can add **DumbInjector** to your Unity project in two ways:
+
+### Option 1: Git Submodule
+```bash
+git submodule add https://github.com/YourUser/DumbInjector.git Assets/DumbInjector
+```
+
+### Option 2: Unity Package Manager
+
+1. Open **Window > Package Manager**  
+2. Click the **+** button and choose **Add package from git URL**  
+3. Enter:  
+
+```bash
+https://github.com/YourUser/DumbInjector.git
+```
 
 ## Setup
 
