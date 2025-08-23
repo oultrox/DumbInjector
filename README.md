@@ -39,7 +39,7 @@ You can add **DumbInjector** to your Unity project in two ways:
 
 ### Option 1: Git Submodule
 ```bash
-git submodule add https://github.com/YourUser/DumbInjector.git Assets/DumbInjector
+git submodule add https://github.com/oultrox/DumbInjector.git Assets/DumbInjector
 ```
 
 ### Option 2: Unity Package Manager
@@ -49,7 +49,7 @@ git submodule add https://github.com/YourUser/DumbInjector.git Assets/DumbInject
 3. Enter:  
 
 ```bash
-https://github.com/YourUser/DumbInjector.git
+https://github.com/oultrox/DumbInjector.git
 ```
 
 ## Setup
