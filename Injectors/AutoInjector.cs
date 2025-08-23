@@ -1,7 +1,6 @@
-using System.Linq;
 using UnityEngine;
 
-namespace DumbInjector
+namespace DumbInjector.Injectors
 {
     /// <summary>
     /// Component that auto-injects newly instantiated GameObjects.

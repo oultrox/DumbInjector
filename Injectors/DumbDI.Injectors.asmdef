@@ -1,5 +1,5 @@
 {
-    "name": "DumbDI.Internal",
+    "name": "DumbDI.Injectors",
     "rootNamespace": "",
     "references": [
         "GUID:b45a55fa4251b1e47a21220ee5cb3f34",

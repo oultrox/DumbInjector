@@ -3,7 +3,7 @@ using UnityEngine;
 namespace DumbInjector.Internal
 {
     /// <summary>
-    /// Generic MonoBehaviour singleton base class for submodules.
+    /// Generic MonoBehaviour singleton helper.
     /// </summary>
     public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {

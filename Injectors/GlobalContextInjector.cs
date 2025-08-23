@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using UnityEngine;
 
 namespace DumbInjector.Injectors
@@ -13,35 +11,15 @@ namespace DumbInjector.Injectors
     [DefaultExecutionOrder(int.MinValue + 999)]
     public class GlobalContextInjector : MonoBehaviour, IInjector
     {
-        readonly HashSet<Type> _injectableTypes = new();
-        bool _typesCached;
-        const BindingFlags BINDING_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        HashSet<Type> _injectableTypes = new();
+        bool _areTypesCached;
         
         void Awake()
         {
-            CacheInjectableTypes();
+            _injectableTypes = DependencyUtils.GetInjectableTypes();
             InjectSceneObjects();
         }
-
-        void CacheInjectableTypes()
-        {
-            if (_typesCached) return;
-            
-            var types = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(a => a.GetTypes())
-                .Where(t => typeof(MonoBehaviour).IsAssignableFrom(t));
-
-            foreach (var t in types)
-            {
-                bool injectable = t.GetFields(BINDING_FLAGS).Any(f => Attribute.IsDefined(f, typeof(InjectAttribute))) ||
-                                  t.GetProperties(BINDING_FLAGS).Any(p => Attribute.IsDefined(p, typeof(InjectAttribute))) ||
-                                  t.GetMethods(BINDING_FLAGS).Any(m => Attribute.IsDefined(m, typeof(InjectAttribute))) ||
-                                  typeof(IDependencyProvider).IsAssignableFrom(t);
-                if (injectable) _injectableTypes.Add(t);
-            }
-
-            _typesCached = true;
-        }
+        
         
         void InjectSceneObjects()
         {
