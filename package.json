@@ -1,0 +1,22 @@
+{
+  "name": "com.yourcompany.dumbinjector",
+  "displayName": "Dumb Injector",
+  "version": "1.0.0",
+  "unity": "2021.3",
+  "description": "A lightweight dependency injection framework for Unity. Supports scene-local and global injection, provider methods, and attribute-based injection.",
+  "keywords": [
+    "dependency-injection",
+    "injector",
+    "unity",
+    "scene-injector",
+    "service-locator"
+  ],
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com",
+    "url": "https://your-website.com"
+  },
+  "dependencies": {
+  },
+  "license": "MIT"
+}
