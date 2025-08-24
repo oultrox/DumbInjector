@@ -417,9 +417,9 @@ DumbInjector leverages **C# reflection** to automatically discover and inject de
 This approach allows you to write clean, decoupled code without manually wiring dependencies, while still being fully dynamic and flexible.
 
 ## Things to improve
-- I'm pretty sure I'm missing C# constructor plain classes injections. 
+- Maybe implement C# constructor plain classes injections. 
 - Better debugging tools. 
-- Better architectural tooling.
+- Better editor tooling.
 
 ## References
 
