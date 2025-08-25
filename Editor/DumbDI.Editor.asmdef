@@ -1,0 +1,16 @@
+{
+    "name": "DumbInjector.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:bb59a93123d6cb44780de14e5cb148f1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
