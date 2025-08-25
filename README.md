@@ -39,7 +39,7 @@ You can add **DumbInjector** to your Unity project in two ways:
 
 ### Option 1: Git Submodule
 ```bash
-git submodule add https://github.com/YourUser/DumbInjector.git Assets/DumbInjector
+git submodule add https://github.com/oultrox/DumbInjector.git Assets/DumbInjector
 ```
 
 ### Option 2: Unity Package Manager
@@ -49,7 +49,7 @@ git submodule add https://github.com/YourUser/DumbInjector.git Assets/DumbInject
 3. Enter:  
 
 ```bash
-https://github.com/YourUser/DumbInjector.git
+https://github.com/oultrox/DumbInjector.git
 ```
 
 ## Setup
@@ -417,9 +417,9 @@ DumbInjector leverages **C# reflection** to automatically discover and inject de
 This approach allows you to write clean, decoupled code without manually wiring dependencies, while still being fully dynamic and flexible.
 
 ## Things to improve
-- I'm pretty sure I'm missing C# constructor plain classes injections. 
+- Maybe implement C# constructor plain classes injections. 
 - Better debugging tools. 
-- Better architectural tooling.
+- Better editor tooling.
 
 ## References
 
