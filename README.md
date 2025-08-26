@@ -54,23 +54,37 @@ https://github.com/oultrox/DumbInjector.git
 
 ## Setup
 
-DumbInjector is **scene-scoped**, meaning each scene requires a context injector to resolve dependencies correctly.  
+DumbInjector is **scene-scoped**, meaning each scene requires a **single** context injector to resolve dependencies correctly.  
 
-### 1. **Setup Context Injector Prefab Setup**
-  Each individual scene (except the global one) should have a `SceneContextInjector` prefab. It will:
-  - Scan all root GameObjects for `[Inject]` attributes
-  - Resolve dependencies from scene-local providers first
-  - Resolve Global Providers if needed.
-  
-### 2. **Global Context Injector Prefab setup (for additive scene setups)**
-  Place this prefab in a persistent "Global" scene. It will automatically:
-  - Scan the scene for `[Inject]` attributes
-  - Register all `IDependencyProvider` outputs
-  - Inject dependencies into scene objects
+### 1. Scene Context Injector
+Use the **editor menu** to create a `SceneContextInjector` in your scene:
+
+`GameObject > DumbInjector > Create SceneContextInjector`
+
+This will automatically create a GameObject named `SceneContextInjector` and add the component. It will:  
+
+- Scan all root GameObjects in the scene for `[Inject]` attributes  
+- Resolve dependencies from **scene-local providers first**  
+- Fall back to the **GlobalContextInjector** if needed  
+
+![Injector](https://github.com/user-attachments/assets/18087ded-8d75-406d-8cf2-7245209e994a)
+
+---
+
+### 2. Global Context Injector
+For additive scene setups, use the editor menu to create a `GlobalContextInjector`:
+
+`GameObject > DumbInjector > Create GlobalContextInjector`
+This will create a GameObject named `GlobalContextInjector` and add the component. It will:  
+- Scan the scene for `[Inject]` attributes  
+- Register all `IDependencyProvider` outputs into the singleton `Builder`  
+- Inject dependencies into all scene objects.
+
+> 💡 **Tip:** You can create prefabs of these contexts if you want to, you can just slap either  `GlobalContextInjector` or `SceneContextInjector` in a GameObject. Remember: only 1 type of context is needed per scene. 
 
 ### 3. Additive-Scene Setup
 
-When using a `GlobalContextInjector` in a globla scene alongside other scene-local's `SceneContextInjector`, it is **crucial that the global context is initialized first**. This ensures that any dependencies registered globally are available to scene-local injectors.
+When using a `GlobalContextInjector` in a global scene alongside other scene-local's `SceneContextInjector`, it is **crucial that the global context is initialized first**. This ensures that any dependencies registered globally are available to scene-local injectors.
 
 You can achieve this in one of the following ways:
 
