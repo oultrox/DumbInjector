@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DumbInjector.Injectors
@@ -23,32 +24,37 @@ namespace DumbInjector.Injectors
             void InjectSceneObjects()
             {
                 var roots = gameObject.scene.GetRootGameObjects();
-                foreach (var root in roots)
+
+                // Collect all MonoBehaviours in the scene
+                var allMBs = roots.SelectMany(r => r.GetComponentsInChildren<MonoBehaviour>(true))
+                    .Where(mb => mb != null)
+                    .ToArray();
+
+                // First pass: register all IDependencyProvider outputs
+                foreach (var mb in allMBs)
                 {
-                    var all = root.GetComponentsInChildren<MonoBehaviour>(true);
-                    foreach (var mb in all)
+                    if (mb is IDependencyProvider provider)
                     {
-                        if (mb == null) continue;
+                        DependencyUtils.RegisterProvider(provider, _sceneRegistry, Inject);
+                    }
+                }
 
-                        // Register provider outputs
-                        if (mb is IDependencyProvider provider)
-                            DependencyUtils.RegisterProvider(provider, _sceneRegistry, Inject);
+                // Second pass: register all scene objects themselves and their interfaces
+                foreach (var mb in allMBs)
+                {
+                    var type = mb.GetType();
+                    _sceneRegistry.TryAdd(type, mb);
 
-                        // Register the object itself
-                        var type = mb.GetType();
-                        _sceneRegistry.TryAdd(type, mb);
+                    foreach (var iface in type.GetInterfaces())
+                        _sceneRegistry.TryAdd(iface, mb);
+                }
 
-                        // Register all interfaces it implements
-                        foreach (var interfaceType in type.GetInterfaces())
-                        {
-                            _sceneRegistry.TryAdd(interfaceType, mb);
-                        }
-                        
-                        if (IsInjectable(mb))
-                        {
-                            Inject(mb);
-                        }
-                        
+                // Third pass: inject all MonoBehaviours that have [Inject] fields/properties/methods
+                foreach (var mb in allMBs)
+                {
+                    if (IsInjectable(mb))
+                    {
+                        Inject(mb);
                     }
                 }
             }

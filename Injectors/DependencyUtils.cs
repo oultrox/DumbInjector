@@ -111,9 +111,15 @@ namespace DumbInjector.Injectors
         {
             foreach (var method in type.GetMethods(FLAGS).Where(m => Attribute.IsDefined(m, typeof(InjectAttribute))))
             {
-                var parameters = method.GetParameters().Select(p => resolver(p.ParameterType)).ToArray();
-                if (parameters.All(p => p != null))
-                    method.Invoke(instance, parameters);
+                var parameters = method.GetParameters();
+                var resolvedInstances = parameters.Select(p => resolver(p.ParameterType)).ToArray();
+
+                if (resolvedInstances.Any(r => r == null))
+                {
+                    throw new Exception($"[Injector] Failed to inject method '{method.Name}' in '{type.Name}': one or more dependencies are missing.");
+                }
+
+                method.Invoke(instance, resolvedInstances);
             }
         }
     }
