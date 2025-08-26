@@ -169,6 +169,7 @@ public class AudioProvider: MonoBehaviour, IDependencyProvider
 Simply decorate fields, properties, or methods with `[Inject]`:
 
 ```csharp
+// Example attribute injection
 public class PlayerController : MonoBehaviour
 {
     [Inject] IHasHealth health;
@@ -180,6 +181,31 @@ public class PlayerController : MonoBehaviour
         audio.PlaySound("spawn");
     }
 }
+```
+
+```csharp
+// Example method injection
+public class Pistol : Weapon
+{ 
+    Sprite idlePistol;
+    Sprite shotPistol;
+    GameObject bulletHolePrefab;
+    SpriteRenderer spriteRenderer;
+    Vector3 firePosition;
+    
+    
+    [Inject]
+    public void InjectContainer(WeaponContainer weaponContainer)
+    {
+        idlePistol = weaponContainer.IdlePistol;
+        shotPistol = weaponContainer.ShotPistol;
+        bulletHolePrefab = weaponContainer.BulletHolePrefab;
+    }
+    
+    private void Awake()
+    {
+        InitBehaviors();
+    }
 ```
 
 No singleton handling is required in your consumers — everything is injected automatically, let the dumb injectors handle that for you.
